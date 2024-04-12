@@ -2,7 +2,7 @@ import random
 
 class Poker:
     def __init__(self):
-        self.players = {0: set(), 1: set(), 2: set(), 3: set()}
+        self.players = {0: [], 1: [], 2: [], 3: []}
         self.turn = 0
         self.last = None
 
@@ -10,7 +10,7 @@ class Poker:
         cards = [(i, j) for i in range(3, 16) for j in range(1, 5)]
         random.shuffle(cards)
         for i in range(4):
-            self.players[i] = set(cards[i*13:(i+1)*13])
+            self.players[i] = cards[i*13:(i+1)*13]
         for player, cards in self.players.items():
             if (3, 4) in cards:
                 self.turn = player
@@ -24,7 +24,9 @@ class Poker:
             raise ValueError("It's not your turn")
         if not all(card in self.players[player] for card in cards):
             raise ValueError("You don't have these cards")
-        self.players[player] -= set(cards)
+        s=set(self.players[player])
+        s -= set(cards)
+        self.players[player]=list(s)
         self.last = (cards,player)
         self.turn = (self.turn + 1) % 4
 
