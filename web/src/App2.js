@@ -18,53 +18,35 @@
         setGameState('notStarted');
       }
     };
-
-    const renderCardArea = (playerIndex) => {
-      const rotationClass = playerIndex === (gameData.player_id + 3) % 4 ? 'rotate90'
-                         : playerIndex === (gameData.player_id + 1) % 4 ? 'rotate270'
-                         : ''; 
+  
+    const renderCardArea = (playerIndex,area) => {
+      
       return (
-        <div className={`card-area ${rotationClass} ${gameData.player_id === playerIndex ? 'player-area' : ''}`}>
+        <div className={`card-area ${gameData.player_id === playerIndex ? 'player-area' : ''} ${area}`}>
           <p>Player {playerIndex}</p>
           {gameData.cards[playerIndex].map((card, i) => (
           <div key={i}>
             <img src={gameData.player_id === playerIndex ? require(`./cards/card_${suit[card[1]]}_${card[0] === 13 ? 13 : card[0] % 13}.png`)
-                  : require('./cards/card_back.png')} alt="card" />
+                  : require('./cards/card_back.png')}alt="card"/>
           </div>))
           }
         </div>
       );
     };
-
-    function lastCard(){
-      return (
-        <div className={'last'}>
-          {gameData.cards[0].map((card, i) => (
-          <div key={i}>
-            {i<5?<img src={require(`./cards/card_${suit[card[1]]}_${card[0] === 13 ? 13 : card[0] % 13}.png`)} alt="card" />:null}
-          </div>))
-          }
-        </div>
-      );
-    };
-
   
     return (
       <div className="App">
         {gameState === 'notStarted' && <button onClick={startGame}>Start Game</button>}
         {gameState === 'waiting' && <div>Waiting for game...</div>}
         {gameState === 'inProgress' && (
-          
           <div className='table'>
-            {renderCardArea((gameData.player_id + 3) % 4)}
-            <div className='table2'>
-            {renderCardArea((gameData.player_id + 2) % 4)}
-            {lastCard()}
-            {renderCardArea(gameData.player_id)}
+            {renderCardArea((gameData.player_id + 2) % 4,'top')}
+            <div style={{justifyContent:'space-between',display:'flex',flexDirection:'row'}}>
+            {renderCardArea((gameData.player_id + 3) % 4,'right')}
+            {renderCardArea((gameData.player_id + 1) % 4,'left')} 
             </div>
-            {renderCardArea((gameData.player_id + 1) % 4)} 
+            {renderCardArea(gameData.player_id,'')} // Bottom: Player
           </div>
-            
         )}
       </div>
     );

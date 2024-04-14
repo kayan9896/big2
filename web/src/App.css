@@ -1,18 +1,75 @@
-.table {
+.table{
+  justify-content:'space-between';
+  display:flex;
+  flex-direction:row;
+  height: 90vh;
+  width: 90vw;
+  padding:2%
+}
+
+.table2 {
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap; /* Allow wrapping if needed */
-  justify-content: space-around; /* Distribute evenly with margins */
+  height: 90vh; /* Ensure it takes full viewport height */
+  justify-content: space-between; /* Distribute space between top, middle, bottom */
 }
 
 .card-area {
   display: flex;
-  flex-direction: column; /* Column for left and right areas */
+  flex-direction: row; 
   align-items: center; /* Center cards horizontally */
-  margin: 10px; /* Adjust margins as desired */
+  justify-content: center;
+  position: relative;
 }
 
-.player-area {
-  flex-direction: row; /* Row for top and bottom areas */
-  justify-content: space-around; /* Distribute cards horizontally */
+.card-area img {
+  width: 50px ; /* Set the desired card width */
+  height: auto; /* Maintain aspect ratio */
+  margin-right: -25px ; /* Adjust the overlap distance */
 }
+
+.player-area { /* Assuming this is the class for the bottom area */
+  position: relative;
+}
+
+.player-area img {
+  width: 80px !important; /* Set the desired card width */
+  height: auto; /* Maintain aspect ratio */
+  margin-right: -40px !important; /* Adjust the overlap distance */
+}
+
+.last{
+  display: flex;
+  flex-direction: row; 
+  align-items: center; /* Center cards horizontally */
+  justify-content: center;
+}
+
+.left {
+  transform: rotate(90deg);
+  transform-origin: center;
+}
+
+.right {
+  transform: rotate(270deg);
+  transform-origin: center;
+}
+
+.top {
+  transform: rotate(180deg);
+  transform-origin: center;
+}
+
+.rotate90 {
+  transform: rotate(90deg);
+  -webkit-transform: rotate(90deg); /* Safari and Chrome */
+  -moz-transform: rotate(90deg); /* Firefox */
+  -ms-transform: rotate(90deg); /* IE */
+  -o-transform: rotate(90deg); /* Opera */
+}
+
+.rotate270 {
+  transform: rotate(270deg);
+  /* Add vendor prefixes as needed */
+}
+
