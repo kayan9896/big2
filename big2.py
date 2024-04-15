@@ -10,28 +10,31 @@ class Poker:
         cards = [(i, j) for i in range(3, 16) for j in range(1, 5)]
         random.shuffle(cards)
         for i in range(4):
-            self.players[i] = cards[i*13:(i+1)*13]
+            self.players[i] = sorted(cards[i*13:(i+1)*13],key=lambda c: (c[0],-c[1]))
         for player, cards in self.players.items():
-            if (3, 4) in cards:
+            if cards[0]==(3,4):
                 self.turn = player
                 break
 
     def skip(self):
         self.turn = (self.turn + 1) % 4
 
-    def play(self, player, cards):
+    def play(self, player, c):
+        cards=[self.players[player][i] for i in c]
         if player != self.turn:
             raise ValueError("It's not your turn")
         if not all(card in self.players[player] for card in cards):
             raise ValueError("You don't have these cards")
-        s=set(self.players[player])
-        s -= set(cards)
-        self.players[player]=list(s)
+        tmp=[]
+        for i in range(len(self.players[player])):
+            if i not in c: tmp.append(self.players[player][i])
+        self.players[player]=tmp
         self.last = (cards,player)
         self.turn = (self.turn + 1) % 4
 
 
-    def valid(self, player, cards):
+    def valid(self, player, c):
+        cards=[self.players[player][i] for i in c]
         if not self.last:
             return self.is_valid_combination(cards) and (3,4) in cards
         if self.last and self.last[1] == player:
@@ -87,5 +90,5 @@ class Poker:
 # Test the game
 game = Poker()
 game.distribute()
-print(game.valid(game.turn,[(3,4),(2,3)]))
+print(game.valid(game.turn,[1,2]))
 

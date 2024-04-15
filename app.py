@@ -63,8 +63,11 @@ def play_card():
     # Call the play function and return the updated player's cards
     try:
         games[game_id].play(player_id, cards)
+        games[game_id].skip()
         response = {
-            'cards': games[game_id].players
+            'cards': games[game_id].players,
+            'last': games[game_id].last,
+            'turn': games[game_id].turn
         }
         return jsonify(response), 200
     except ValueError as e:
