@@ -18,18 +18,32 @@
         setGameState('notStarted');
       }
     };
+    const [selectedCards, setSelectedCards] = useState([]);
 
+    const handleCardClick = (index) => {
+      setSelectedCards((prevSelected) => {
+        if (prevSelected.includes(index)) {
+          return prevSelected.filter((i) => i !== index); // Deselect
+        } else {
+          return [...prevSelected, index]; // Select
+        }
+      });
+    };
     const renderCardArea = (playerIndex) => {
+
       const rotationClass = playerIndex === (gameData.player_id + 3) % 4 ? 'rotate90'
                          : playerIndex === (gameData.player_id + 1) % 4 ? 'rotate270'
                          : ''; 
+                         
       return (
         <div className={`card-area ${rotationClass} ${gameData.player_id === playerIndex ? 'player-area' : ''}`}>
           <p>Player {playerIndex}</p>
           {gameData.cards[playerIndex].map((card, i) => (
           <div key={i}>
             <img src={gameData.player_id === playerIndex ? require(`./cards/card_${suit[card[1]]}_${card[0] === 13 ? 13 : card[0] % 13}.png`)
-                  : require('./cards/card_back.png')} alt="card" />
+                  : require('./cards/card_back.png')} alt="card" 
+                  className={(selectedCards.includes(i)) ? 'selected' : ''}
+                  onClick={() => handleCardClick(i)}/>
           </div>))
           }
         </div>
