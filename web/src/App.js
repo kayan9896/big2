@@ -20,7 +20,8 @@
     };
     const [selectedCards, setSelectedCards] = useState([]);
 
-    const handleCardClick = (index) => {
+    const handleCardClick = (index,p) => {
+      if(p!==gameData.player_id) return
       setSelectedCards((prevSelected) => {
         if (prevSelected.includes(index)) {
           return prevSelected.filter((i) => i !== index); // Deselect
@@ -43,7 +44,7 @@
             <img src={gameData.player_id === playerIndex ? require(`./cards/card_${suit[card[1]]}_${card[0] === 13 ? 13 : card[0] % 13}.png`)
                   : require('./cards/card_back.png')} alt="card" 
                   className={(selectedCards.includes(i)) ? 'selected' : ''}
-                  onClick={() => handleCardClick(i)}/>
+                  onClick={() => handleCardClick(i,playerIndex)}/>
           </div>))
           }
         </div>

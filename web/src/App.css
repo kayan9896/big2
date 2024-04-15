@@ -23,29 +23,26 @@
 }
 
 .card-area img {
-  width: 50px ; /* Set the desired card width */
-  height: auto; /* Maintain aspect ratio */
-  margin-right: -25px ; /* Adjust the overlap distance */
-}
-
-.player-area { /* Assuming this is the class for the bottom area */
-  position: relative;
+  width: 50px;
+  height: auto;
+  margin-right: -25px;
+  position: relative; /* Crucial: Establish a stacking context */
 }
 
 .player-area img {
-  width: 80px !important; /* Set the desired card width */
-  height: auto; /* Maintain aspect ratio */
-  margin-right: -40px !important; /* Adjust the overlap distance */
-  transition: transform 0.3s ease-in-out;
-  z-index: 1;
+  width: 80px !important;
+  height: auto;
+  margin-right: -40px !important;
+  position: relative;
 }
-.player-area img.selected {
-  transform: translateY(-20px); /* Adjust the vertical offset as needed */
-}
+
 .player-area img:hover { /* Optional: visual indication on hover */
   cursor: pointer;
 }
 
+.player-area img.selected { /* Target selected cards */
+  transform: translateY(-15px);
+}
 .last{
   display: flex;
   flex-direction: row; 
