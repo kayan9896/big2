@@ -12,6 +12,7 @@
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
     const startGame = async () => {
       setGameState('waiting');
+      try{
       const response = await fetch(link+'start'); // Replace 'link' with your backend endpoint
       const data = await response.json();
       if (data.game_id) {
@@ -19,8 +20,9 @@
         setGameState('inProgress');
         setHandcards(data.cards)
         setTurn(data.turn)
-      } else {
+      }} catch(e) {
         setGameState('notStarted');
+        console.log(e)
       }
     };
     const [selectedCards, setSelectedCards] = useState([]);
@@ -46,6 +48,7 @@
           <p>Player {playerIndex}</p>
           {handcards[playerIndex].map((card, i) => (
           <div key={i}>
+            {console.log(handcards,card,i)}
             <img src={gameData.player_id === playerIndex ? require(`./cards/card_${suit[card[1]]}_${card[0] === 13 ? 13 : card[0] % 13}.png`)
                   : require('./cards/card_back.png')} alt="card" 
                   className={(selectedCards.includes(i)) ? 'selected' : ''}

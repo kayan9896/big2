@@ -2,7 +2,7 @@ import random
 
 class Poker:
     def __init__(self):
-        self.players = {0: set(), 1: set(), 2: set(), 3: set()}
+        self.players = {0: [], 1: [], 2: [], 3: []}
         self.turn = 0
         self.last = None
 
@@ -10,26 +10,31 @@ class Poker:
         cards = [(i, j) for i in range(3, 16) for j in range(1, 5)]
         random.shuffle(cards)
         for i in range(4):
-            self.players[i] = set(cards[i*13:(i+1)*13])
+            self.players[i] = sorted(cards[i*13:(i+1)*13],key=lambda c: (c[0],-c[1]))
         for player, cards in self.players.items():
-            if (3, 4) in cards:
+            if cards[0]==(3,4):
                 self.turn = player
                 break
 
     def skip(self):
         self.turn = (self.turn + 1) % 4
 
-    def play(self, player, cards):
+    def play(self, player, c):
+        cards=[self.players[player][i] for i in c]
         if player != self.turn:
             raise ValueError("It's not your turn")
         if not all(card in self.players[player] for card in cards):
             raise ValueError("You don't have these cards")
-        self.players[player] -= set(cards)
+        tmp=[]
+        for i in range(len(self.players[player])):
+            if i not in c: tmp.append(self.players[player][i])
+        self.players[player]=tmp
         self.last = (cards,player)
         self.turn = (self.turn + 1) % 4
 
 
-    def valid(self, player, cards):
+    def valid(self, player, c):
+        cards=[self.players[player][i] for i in c]
         if not self.last:
             return self.is_valid_combination(cards) and (3,4) in cards
         if self.last and self.last[1] == player:
@@ -64,9 +69,9 @@ class Poker:
 
     def compare_combinations(self, last, cards):
         if len(last) == 1:
-            return cards[0][0] > last[0][0] or (cards[0][0] == last[0][0] and cards[0][1] > last[0][1])
+            return cards[0][0] > last[0][0] or (cards[0][0] == last[0][0] and cards[0][1] < last[0][1])
         elif len(last) == 2:
-            return cards[0][0] > last[0][0] or (cards[0][0] == last[0][0] and cards[0][1] > last[0][1])
+            return cards[0][0] > last[0][0] or (cards[0][0] == last[0][0] and cards[0][1] < last[0][1])
         elif len(last) == 5:
             if self.is_straight(last):
                 return self.is_straight(cards) and cards[-1][0] > last[-1][0]
@@ -85,5 +90,5 @@ class Poker:
 # Test the game
 game = Poker()
 game.distribute()
-print(game.valid(game.turn,[(3,4),(2,3)]))
+print(game.valid(game.turn,[1,2]))
 
