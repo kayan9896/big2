@@ -63,10 +63,9 @@ def play_card():
     # Call the play function and return the updated player's cards
     try:
         games[game_id].play(player_id, cards)
-        games[game_id].skip()
         response = {
             'cards': games[game_id].players,
-            'last': games[game_id].last,
+            'last': games[game_id].last[0],
             'turn': games[game_id].turn
         }
         return jsonify(response), 200
@@ -102,11 +101,32 @@ def check_validity():
         return jsonify({'message': 'Invalid game or player'}), 400
 
     # Call the valid function and return the result
-    result = games[game_id].valid(player_id, cards)
+    result = True if games[game_id].valid(player_id, cards) >0 else False
     response = {
         'valid': result
     }
     return jsonify(response), 200
+
+@app.route('/update', methods=['POST'])
+def update():
+    data = request.get_json()
+    game_id = data.get('game_id')
+    player_id = data.get('player_id')
+
+    # Check if the game and player exist
+    if game_id not in games or player_id not in games[game_id].players:
+        return jsonify({'message': 'Invalid game or player'}), 400
+
+    # Call the play function and return the updated player's cards
+    try:
+        response = {
+            'cards': games[game_id].players,
+            'last': games[game_id].last[0] if games[game_id].last else None,
+            'turn': games[game_id].turn
+        }
+        return jsonify(response), 200
+    except ValueError as e:
+        return jsonify({'message': str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)

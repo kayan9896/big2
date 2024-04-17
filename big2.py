@@ -34,59 +34,80 @@ class Poker:
 
 
     def valid(self, player, c):
+        if not c: return -1
         cards=[self.players[player][i] for i in c]
         if not self.last:
-            return self.is_valid_combination(cards) and (3,4) in cards
+            if (3,4) in cards:
+                return self.is_valid_combination(cards)
+            return -1
         if self.last and self.last[1] == player:
             return self.is_valid_combination(cards)
         else:
-            return self.is_valid_combination(cards) and self.compare_combinations(self.last, cards)
+            if len(cards)==len(self.last[0]):
+                rk=self.is_valid_combination(cards)
+                if rk>0: 
+                    print(rk)
+                    return self.compare_combinations(self.last[0], cards,rk)
+        return -1
 
     def is_valid_combination(self, cards):
         if len(cards) == 1:
-            return True
+            return 1
         elif len(cards) == 2:
-            return cards[0][0] == cards[1][0]
+            if cards[0][0] == cards[1][0]: return 2
+            return -1
         elif len(cards) == 5:
-            return self.is_straight(cards) or self.is_flush(cards) or self.is_full_house(cards) or self.is_king_kong(cards) or self.is_straight_flush(cards)
-        else:
-            return False
+            if self.is_straight(cards): return 3 
+            if self.is_flush(cards): return 4 
+            if self.is_full_house(cards): return 5 
+            if self.is_king_kong(cards): return 6
+            if self.is_straight_flush(cards): return 7
+        return -1
 
     def is_straight(self, cards):
-        return all(cards[i][0] == cards[i+1][0] + 1 for i in range(4))
+        return all(cards[i][0] == cards[i+1][0] - 1 for i in range(4))
 
     def is_flush(self, cards):
         return all(card[1] == cards[0][1] for card in cards)
 
     def is_full_house(self, cards):
-        return len(set(card[0] for card in cards)) == 2 and any(cards.count(card) == 3 for card in cards)
+        return (cards[2][0]==cards[0][0] and cards[3][0]==cards[4][0]) or (cards[2][0]==cards[4][0] and cards[0][0]==cards[1][0])
 
     def is_king_kong(self, cards):
-        return len(set(card[0] for card in cards)) == 2 and any(cards.count(card) == 4 for card in cards)
+        return (cards[3][0]==cards[1][0])
 
     def is_straight_flush(self, cards):
         return self.is_straight(cards) and self.is_flush(cards)
 
-    def compare_combinations(self, last, cards):
+    def compare_combinations(self, last, cards, rk):
         if len(last) == 1:
-            return cards[0][0] > last[0][0] or (cards[0][0] == last[0][0] and cards[0][1] < last[0][1])
+            return 1 if self.compare_last_one(last,cards) else -1
         elif len(last) == 2:
-            return cards[0][0] > last[0][0] or (cards[0][0] == last[0][0] and cards[0][1] < last[0][1])
+            return 2 if self.compare_last_one(last,cards) else -1
         elif len(last) == 5:
             if self.is_straight(last):
-                return self.is_straight(cards) and cards[-1][0] > last[-1][0]
+                if rk>3: return rk
+                return 3 if self.compare_last_one(last,cards) else -1
             elif self.is_flush(last):
-                return self.is_flush(cards) and cards[-1][0] > last[-1][0]
+                if rk>4: return rk
+                if rk<4: return -1
+                return 4 if self.compare_last_one(last,cards) else -1
             elif self.is_full_house(last):
-                return self.is_full_house(cards) and cards[0][0] > last[0][0]
+                if rk>5: return rk
+                if rk<5: return -1
+                return 5 if cards[2][0] > last[2][0] else -1
             elif self.is_king_kong(last):
-                return self.is_king_kong(cards) and cards[0][0] > last[0][0]
+                if rk>6: return rk
+                if rk<6: return -1
+                return 6 if cards[2][0] > last[2][0] else -1
             elif self.is_straight_flush(last):
-                return self.is_straight_flush(cards) and cards[-1][0] > last[-1][0]
-            else:
-                return False
+                if rk<7: return -1
+                return 7 if self.compare_last_one(last,cards) else -1
         else:
-            return False
+            return -1
+
+    def compare_last_one(self,last,cards):
+        return cards[-1][0] > last[-1][0] or (cards[-1][0] == last[-1][0] and cards[-1][1] < last[-1][1])
 # Test the game
 game = Poker()
 game.distribute()
