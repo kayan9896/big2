@@ -1,6 +1,7 @@
 
   import React, { useState, useEffect } from 'react';
   import './App.css'; // Assuming a CSS file for styling
+  import Timebar from './Timebar';
   
   function App() {
     const link='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'
@@ -60,11 +61,14 @@
 
       const rotationClass = playerIndex === (gameData.player_id + 3) % 4 ? 'rotate90'
                          : playerIndex === (gameData.player_id + 1) % 4 ? 'rotate270'
-                         : ''; 
+                         : playerIndex === (gameData.player_id + 2) % 4? 'rotate180': ''; 
                          
       return (
-        <div className={`card-area ${rotationClass} ${gameData.player_id === playerIndex ? 'player-area' : ''}`}>
-          <p>Player {playerIndex}</p>
+        <div className={rotationClass} style={{width:'100%', height:'30%',alignContent:'center',display:'flex',flexDirection:'column'}}>
+          <p style={{textAlign:'center'}}>Player {playerIndex}</p>
+          {turn===playerIndex?<Timebar skip={turn===gameData.player_id?handlePass:null}/>:<p>{turn}</p>}
+        <div className={`card-area ${gameData.player_id === playerIndex ? 'player-area' : ''}`}>
+          
           {handcards[playerIndex].map((card, i) => (
           <div key={i}>
             <img src={gameData.player_id === playerIndex ? require(`./cards/card_${suit[card[1]]}_${card[0] === 13 ? 13 : card[0] % 13}.png`)
@@ -73,6 +77,7 @@
                   onClick={() => handleCardClick(i,playerIndex)}/>
           </div>))
           }
+        </div>
         </div>
       );
     };
@@ -101,6 +106,7 @@
           })
         });
         setSelectedCards([])
+        console.log('pas')
         if (response.ok) {
           const data = await response.json();
           setTurn(data.turn)

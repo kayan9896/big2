@@ -1,5 +1,6 @@
 .table{
   justify-content:'space-between';
+  align-items: center;
   display:flex;
   flex-direction:row;
   height: 90vh;
@@ -11,6 +12,7 @@
   display: flex;
   flex-direction: column;
   height: 90vh; /* Ensure it takes full viewport height */
+  width: 100%;
   justify-content: space-between; /* Distribute space between top, middle, bottom */
 }
 
@@ -54,8 +56,23 @@
   transform: rotate(90deg);
 }
 
+.rotate90 p{
+  transform: rotate(-90deg);
+}
+
 .rotate270 {
   transform: rotate(270deg);
+}
+
+.rotate270 p{
+  transform: rotate(90deg);
+}
+
+.rotate180 {
+  transform: rotate(180deg);
+}
+.rotate180 p{
+  transform: rotate(180deg);
 }
 
 .buttonrow{
@@ -67,4 +84,11 @@
 
 .buttonrow button{
   margin: 2px 10px;
+}
+
+.time-bar {
+  height: 5px;
+  background-color: #3498db;
+  margin-bottom: 2px;
+  transition: width 1s linear; /* Animation duration and easing */
 }
