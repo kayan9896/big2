@@ -14,6 +14,7 @@ class Poker:
         for player, cards in self.players.items():
             if cards[0]==(3,4):
                 self.turn = player
+                self.last=(None,player)
                 break
 
     def skip(self):
@@ -36,17 +37,17 @@ class Poker:
     def valid(self, player, c):
         if not c: return -1
         cards=[self.players[player][i] for i in c]
-        if not self.last:
-            if (3,4) in cards:
-                return self.is_valid_combination(cards)
+        if not self.last[0]:
+            if self.turn==self.last[1]:
+                if (3,4) in cards: return self.is_valid_combination(cards)
+            else: return self.is_valid_combination(cards)
             return -1
-        if self.last and self.last[1] == player:
+        if self.last[1] == player:
             return self.is_valid_combination(cards)
         else:
             if len(cards)==len(self.last[0]):
                 rk=self.is_valid_combination(cards)
                 if rk>0: 
-                    print(rk)
                     return self.compare_combinations(self.last[0], cards,rk)
         return -1
 
@@ -56,12 +57,15 @@ class Poker:
         elif len(cards) == 2:
             if cards[0][0] == cards[1][0]: return 2
             return -1
+        elif len(cards) == 3:
+            if cards[0][0] == cards[1][0] and cards[1][0] == cards[2][0]: return 3
+            return -1
         elif len(cards) == 5:
-            if self.is_straight(cards): return 3 
-            if self.is_flush(cards): return 4 
-            if self.is_full_house(cards): return 5 
-            if self.is_king_kong(cards): return 6
-            if self.is_straight_flush(cards): return 7
+            if self.is_straight(cards): return 4 
+            if self.is_flush(cards): return 5 
+            if self.is_full_house(cards): return 6 
+            if self.is_king_kong(cards): return 7
+            if self.is_straight_flush(cards): return 8
         return -1
 
     def is_straight(self, cards):
@@ -84,25 +88,27 @@ class Poker:
             return 1 if self.compare_last_one(last,cards) else -1
         elif len(last) == 2:
             return 2 if self.compare_last_one(last,cards) else -1
+        elif len(last) == 3:
+            return 3 if self.compare_last_one(last,cards) else -1
         elif len(last) == 5:
             if self.is_straight(last):
-                if rk>3: return rk
-                return 3 if self.compare_last_one(last,cards) else -1
-            elif self.is_flush(last):
                 if rk>4: return rk
-                if rk<4: return -1
                 return 4 if self.compare_last_one(last,cards) else -1
-            elif self.is_full_house(last):
+            elif self.is_flush(last):
                 if rk>5: return rk
                 if rk<5: return -1
-                return 5 if cards[2][0] > last[2][0] else -1
-            elif self.is_king_kong(last):
+                return 5 if self.compare_last_one(last,cards) else -1
+            elif self.is_full_house(last):
                 if rk>6: return rk
                 if rk<6: return -1
                 return 6 if cards[2][0] > last[2][0] else -1
-            elif self.is_straight_flush(last):
+            elif self.is_king_kong(last):
+                if rk>7: return rk
                 if rk<7: return -1
-                return 7 if self.compare_last_one(last,cards) else -1
+                return 7 if cards[2][0] > last[2][0] else -1
+            elif self.is_straight_flush(last):
+                if rk<8: return -1
+                return 8 if self.compare_last_one(last,cards) else -1
         else:
             return -1
 
