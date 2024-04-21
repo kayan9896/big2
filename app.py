@@ -3,10 +3,11 @@ import random
 import time
 from big2 import Poker
 import uuid
-
+from flask_socketio import SocketIO, emit
 from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app, cors_allowed_origins="*")  # Allow connections from frontend
 
 # Global variable to store the list of players waiting for a game
 waitlist = []
@@ -68,6 +69,12 @@ def play_card():
             'last': games[game_id].last[0],
             'turn': games[game_id].turn
         }
+        for i in range(4):
+            if len(games[game_id].players[i]) < 12:
+                # Broadcast gameover message to all players in the game
+                socketio.emit('gameover',{'winner':i}, room=game_id)  
+                  # Remove the finished game 
+        socketio.emit('game_state_update', response, room=game_id)      
         return jsonify(response), 200
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
@@ -84,10 +91,17 @@ def skip_turn():
 
     # Call the skip function and return the updated turn
     games[game_id].skip()
-    response = {
+    t = {
         'turn': games[game_id].turn
     }
-    return jsonify(response), 200
+    response = {
+            'cards': games[game_id].players,
+            'last': games[game_id].last[0],
+            'turn': games[game_id].turn
+        }
+        
+    socketio.emit('game_state_update', response, room=game_id) 
+    return jsonify(t), 200
 
 @app.route('/valid', methods=['POST'])
 def check_validity():
@@ -128,5 +142,41 @@ def update():
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
 
+@socketio.on('disconnect')
+def handle_disconnect():
+    # Find the game and player associated with the socket (you'll need additional logic if you haven't tracked this already)
+    game_id = ... 
+    player_id = ... 
+
+    if game_id in games:
+        # Remove the player from the game
+        del games[game_id].players[player_id]
+
+        # Check if this ends the game (e.g., not enough players)
+        if should_end_game(games[game_id]):
+            socketio.emit('gameover', {'reason': 'player_quit'}, room=game_id)
+            del games[game_id]
+
+import schedule
+import threading
+
+def clean_up_games():
+    while True:
+        current_time = time.time()
+        print(current_time)
+        for game_id, game in list(games.items()):
+            print(current_time,game.last_active)
+            if game.last_active < current_time - 60:
+                del games[game_id]
+                print(games)
+                print(f"Game {game_id} has been removed due to inactivity.")
+        time.sleep(60)
+
+# Run the clean_up_games function every 30 minutes
+cleanup_thread = threading.Thread(target=clean_up_games)
+cleanup_thread.daemon = True  # Set as daemon so it exits when the main thread exits
+cleanup_thread.start()
+
 if __name__ == '__main__':
     app.run(debug=True)
+    
