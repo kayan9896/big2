@@ -2,6 +2,7 @@
   import React, { useState, useEffect } from 'react';
   import './App.css'; // Assuming a CSS file for styling
   import Timebar from './Timebar';
+  import io from 'socket.io-client';
   
   function App() {
     const link='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'
@@ -12,6 +13,24 @@
     const [handcards,setHandcards]=useState(null)
     const [valid,setValid]=useState(false)
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
+
+    useEffect(() => {
+      // Connect to the WebSocket server
+      const socket = io(link);
+    
+      // Listen for the 'gameover' event
+      socket.on('gameover', (data) => {
+        setGameState('gameOver'); 
+        if (data) {
+          // Optionally show "You Win!"
+          console.log('You Win!');
+        } else {
+          console.log('Game Over - Player', data.winner_id, 'wins!'); 
+        }
+      });
+    
+      return () => socket.disconnect(); 
+    }, []);
 
     useEffect(() => {
       if (gameData){
@@ -195,7 +214,10 @@
         {!gameData? (gameState === 'notStarted' ? <button onClick={startGame}>Start Game</button>:
          <div>Waiting for game...</div>)
         : (
-          <div className='table'>
+          gameState === 'gameOver' ? (
+            <div className="gameOverMessage">Game Over!</div> 
+          ) : (
+             <div className='table'>
             {renderCardArea((gameData.player_id + 3) % 4)}
             <div className='table2'>
             {renderCardArea((gameData.player_id + 2) % 4)}
@@ -208,7 +230,7 @@
             </div>
             {renderCardArea((gameData.player_id + 1) % 4)} 
           </div>
-        )}
+        ))}
       </div>
     );
   }

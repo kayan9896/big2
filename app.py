@@ -5,8 +5,11 @@ from big2 import Poker
 import uuid
 
 from flask_cors import CORS
+from flask_socketio import SocketIO, emit 
 app = Flask(__name__)
 CORS(app)
+socketio = SocketIO(app)
+socketio.init_app(app, cors_allowed_origins="*")
 
 # Global variable to store the list of players waiting for a game
 waitlist = []
@@ -68,6 +71,9 @@ def play_card():
             'last': games[game_id].last[0],
             'turn': games[game_id].turn
         }
+        if any(len(games[game_id].players[i])<10 for i in games[game_id].players): 
+            print('over')
+            socketio.emit('gameover', {'game_id': game_id, 'winner_id': 2})
         return jsonify(response), 200
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
