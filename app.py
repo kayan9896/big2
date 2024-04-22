@@ -71,9 +71,12 @@ def play_card():
             'last': games[game_id].last[0],
             'turn': games[game_id].turn
         }
-        if any(len(games[game_id].players[i])<10 for i in games[game_id].players): 
-            print('over')
-            socketio.emit('gameover', {'game_id': game_id, 'winner_id': 2})
+        for i in range(4):
+            if len(games[game_id].players[i]) ==0:
+                # Broadcast gameover message to all players in the game
+                socketio.emit('gameover',{'winner':i}, room=game_id)  
+                  # Remove the finished game 
+        socketio.emit('game_state_update', response, room=game_id)      
         return jsonify(response), 200
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
@@ -90,9 +93,16 @@ def skip_turn():
 
     # Call the skip function and return the updated turn
     games[game_id].skip()
-    response = {
+    t = {
         'turn': games[game_id].turn
     }
+    response = {
+            'cards': games[game_id].players,
+            'last': games[game_id].last[0],
+            'turn': games[game_id].turn
+        }
+        
+    socketio.emit('game_state_update', response, room=game_id) 
     return jsonify(response), 200
 
 @app.route('/valid', methods=['POST'])
@@ -133,6 +143,25 @@ def update():
         return jsonify(response), 200
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
+
+import threading
+
+def clean_up_games():
+    while True:
+        current_time = time.time()
+        print(current_time)
+        for game_id, game in list(games.items()):
+            print(current_time,game.last_active)
+            if game.last_active < current_time - 3600:
+                del games[game_id]
+                print(games)
+                print(f"Game {game_id} has been removed due to inactivity.")
+        time.sleep(1800)
+
+# Run the clean_up_games function every 30 minutes
+cleanup_thread = threading.Thread(target=clean_up_games)
+cleanup_thread.daemon = True  # Set as daemon so it exits when the main thread exits
+cleanup_thread.start()
 
 if __name__ == '__main__':
     app.run(debug=True)

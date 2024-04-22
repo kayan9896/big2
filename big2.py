@@ -1,10 +1,12 @@
 import random
+import time
 
 class Poker:
     def __init__(self):
         self.players = {0: [], 1: [], 2: [], 3: []}
         self.turn = 0
         self.last = None
+        self.last_active=None
 
     def distribute(self):
         cards = [(i, j) for i in range(3, 16) for j in range(1, 5)]
@@ -16,6 +18,7 @@ class Poker:
                 self.turn = player
                 self.last=(None,player)
                 break
+        self.last_active=time.time()
 
     def skip(self):
         self.turn = (self.turn + 1) % 4
@@ -32,6 +35,7 @@ class Poker:
         self.players[player]=tmp
         self.last = (cards,player)
         self.turn = (self.turn + 1) % 4
+        self.last_active=time.time()
 
 
     def valid(self, player, c):

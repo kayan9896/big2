@@ -12,6 +12,7 @@
     const [last,setLast]=useState(null)
     const [handcards,setHandcards]=useState(null)
     const [valid,setValid]=useState(false)
+    const [winner,setWinner]=useState(null)
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
 
     useEffect(() => {
@@ -22,21 +23,21 @@
       socket.on('gameover', (data) => {
         setGameState('gameOver'); 
         if (data) {
-          // Optionally show "You Win!"
-          console.log('You Win!');
-        } else {
-          console.log('Game Over - Player', data.winner_id, 'wins!'); 
+          setWinner(data.winner)
         }
+      });
+      socket.on('game_state_update', (data) => {
+        // Update your React state with the received data 
+        console.log('ud')
+        setTurn(data.turn);
+        setLast(data.last);
+        setHandcards(data.cards); // Set the whole handcards instead of filtering them
       });
     
       return () => socket.disconnect(); 
     }, []);
 
-    useEffect(() => {
-      if (gameData){
-      const interval = setInterval(handleUpdate, 5000);
-      return () => clearInterval(interval);}
-    });
+    
     useEffect(() => {
       if (gameData) {
         // If gameData is not null, update the gameState to 'inProgress'
@@ -215,7 +216,7 @@
          <div>Waiting for game...</div>)
         : (
           gameState === 'gameOver' ? (
-            <div className="gameOverMessage">Game Over!</div> 
+            winner===gameData.player_id?<p>You win!</p>:<div className="gameOverMessage">Game Over! Player {winner} wins.</div> 
           ) : (
              <div className='table'>
             {renderCardArea((gameData.player_id + 3) % 4)}
