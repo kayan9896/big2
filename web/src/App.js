@@ -5,7 +5,8 @@
   import io from 'socket.io-client';
   
   function App() {
-    const link='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'//'https://big2.onrender.com/'//
+    const link='https://big2.onrender.com/'
+    const link1='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'
     const [ gameState, setGameState ] = useState('notStarted'); // 'notStarted', 'waiting', 'inProgress'
     const [ gameData, setGameData ] = useState(null);
     const [turn,setTurn]=useState(null)
