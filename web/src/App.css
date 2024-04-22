@@ -92,3 +92,16 @@
   margin-bottom: 2px;
   transition: width 1s linear; /* Animation duration and easing */
 }
+
+.center-horizontal {
+  display: flex;     
+  justify-content: center; 
+}
+
+/* Center elements horizontally and vertically */
+.center-all {
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  height: 100vh; /* To center vertically in the entire viewport */
+}

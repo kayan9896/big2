@@ -5,7 +5,7 @@
   import io from 'socket.io-client';
   
   function App() {
-    const link='https://big2.onrender.com/'//='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'
+    const link='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'//'https://big2.onrender.com/'//
     const [ gameState, setGameState ] = useState('notStarted'); // 'notStarted', 'waiting', 'inProgress'
     const [ gameData, setGameData ] = useState(null);
     const [turn,setTurn]=useState(null)
@@ -49,13 +49,19 @@
     const startGame = async () => {
       setGameState('waiting');
       try{
+
+        
       const response = await fetch(link+'start'); // Replace 'link' with your backend endpoint
-      const data = await response.json();
-      if (data) {
+      
+      if (response.ok) {
+        const data = await response.json();
         setGameData(data);
         setHandcards(data.cards)
         setTurn(data.turn)
         console.log(gameData,'sadasdasdas')
+      }else{
+        setGameState('notStarted');
+        console.log('back')
       }} catch(e) {
         setGameState('notStarted');
         console.log(e)
@@ -212,12 +218,21 @@
   
     return (
       <div className="App">
-        {!gameData? (gameState === 'notStarted' ? <button onClick={startGame}>Start Game</button>:
-         <div>Waiting for game...</div>)
-        : (
-          gameState === 'gameOver' ? (
-            winner===gameData.player_id?<p>You win!</p>:<div className="gameOverMessage">Game Over! Player {winner} wins.</div> 
+        { !gameData ? (
+        <div className="center-all"> {/* Center both buttons and messages */} 
+          {gameState === 'notStarted' ? (
+            <button onClick={startGame}>Start Game</button>
           ) : (
+            <div>Waiting for game...</div>
+          )}
+        </div> 
+      ) : (
+        gameState === 'gameOver' ? ( 
+          <div className="center-all gameOverMessage"> {/* Center within gameOverMessage */}
+            <button onClick={() => {setGameState('notStarted'); setGameData(null)}}>Return</button>
+            {winner === gameData.player_id ? <p>You win!</p>: <p>Game Over! Player {winner} wins.</p>}
+          </div> 
+        ) : (
              <div className='table'>
             {renderCardArea((gameData.player_id + 3) % 4)}
             <div className='table2'>
