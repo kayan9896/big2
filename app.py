@@ -74,9 +74,9 @@ def play_card():
         for i in range(4):
             if len(games[game_id].players[i]) ==0:
                 # Broadcast gameover message to all players in the game
-                socketio.emit('gameover',{'winner':i}, room=game_id)  
+                socketio.emit('gameover',{'winner':i})  
                   # Remove the finished game 
-        socketio.emit('game_state_update', response, room=game_id)      
+        socketio.emit('game_state_update', response)      
         return jsonify(response), 200
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
@@ -101,8 +101,8 @@ def skip_turn():
             'last': games[game_id].last[0],
             'turn': games[game_id].turn
         }
-        
-    socketio.emit('game_state_update', response, room=game_id) 
+    print(game_id)    
+    socketio.emit('game_state_update', response) 
     return jsonify(response), 200
 
 @app.route('/valid', methods=['POST'])
