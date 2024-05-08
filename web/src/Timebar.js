@@ -3,13 +3,8 @@ import './App.css'; // Assuming a CSS file for styling
 
 function Timebar({skip}) {
   const [timeLeft, setTimeLeft] = useState(15); // Time limit in seconds
-  const isFirstRun = useRef(true); // useRef to track the first run
 
   useEffect(() => {
-    if (isFirstRun.current) {
-      isFirstRun.current = false; // Set it to false on the first run
-      return; // Exit the effect early on the first run
-    }
     const timer = setInterval(() => {
       setTimeLeft((prevTime) => {
         if (prevTime > 0) {
