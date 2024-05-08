@@ -6,7 +6,7 @@
   
   function App() {
     const link1='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'
-    const link='https://big2.onrender.com/'
+    const link=link1//'https://big2.onrender.com/'
    
     const [ gameState, setGameState ] = useState('notStarted'); // 'notStarted', 'waiting', 'inProgress'
     const [ gameData, setGameData ] = useState(null);
@@ -16,10 +16,37 @@
     const [valid,setValid]=useState(false)
     const [winner,setWinner]=useState(null)
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
+    const socket = io(link);
+    const heartbeatInterval = 3000; //. // 3 seconds
+    useEffect(() => {
+      // Function to send a message to the backend to indicate that the player has left the game.
+      const notifyPlayerLeft = () => {
+        console.log('Player leaving the game...');
+        socket.emit('player_left', { game_id: gameData.game_id, player_id: gameData.player_id });
+      };
+  
+      // Attach the notifyPlayerLeft function to the window.onunload event
+      window.addEventListener('unload', notifyPlayerLeft);
+      
+      // Cleanup the event listener when the component unmounts
+      return () => {
+          window.removeEventListener('unload', notifyPlayerLeft);
+      };
+    }, [gameData]); // The effect will run again when gameData changes (e.g., when a new game starts)
+    // Rest of your code...
+useEffect(() => {
+  const heartbeat = () => {
+    if (!gameData) return;
+    socket.emit('heartbeat', { player_id: gameData.player_id, game_id: gameData.game_id });
+  };
+
+  const interval = setInterval(heartbeat, heartbeatInterval);
+  return () => clearInterval(interval);  // Clean up on component unmount
+}, [socket, gameData]);
 
     useEffect(() => {
       // Connect to the WebSocket server
-      const socket = io(link);
+      
     
       // Listen for the 'gameover' event
       socket.on('gameover', (data) => {

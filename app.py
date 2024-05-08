@@ -17,6 +17,7 @@ waitlist = []
 # Global variable to store the current games in progress
 games = {}
 assigned={}
+online={}
 
 def match():
     while len(waitlist) >= 4:
@@ -24,9 +25,11 @@ def match():
             game = Poker()
             game.distribute()
             games[game_id] = game
+            online[game_id]={}
             for i in range(4):
                 usr=waitlist.pop(0)
                 assigned[usr]=(game_id,i)
+                online[game_id][i]=time.time()
 
 @app.route('/start', methods=['GET'])
 def start_game():
@@ -66,6 +69,10 @@ def play_card():
     # Call the play function and return the updated player's cards
     try:
         games[game_id].play(player_id, cards)
+        if len(online[game_id])>0:
+            while games[game_id].turn not in online[game_id]:
+                games[game_id].skip()
+
         response = {
             'cards': games[game_id].players,
             'last': games[game_id].last[0],
@@ -93,9 +100,10 @@ def skip_turn():
 
     # Call the skip function and return the updated turn
     games[game_id].skip()
-    t = {
-        'turn': games[game_id].turn
-    }
+    if len(online[game_id])>0:
+        while games[game_id].turn not in online[game_id]:
+            games[game_id].skip()
+
     response = {
             'cards': games[game_id].players,
             'last': games[game_id].last[0],
@@ -154,6 +162,7 @@ def clean_up_games():
             print(current_time,game.last_active)
             if game.last_active < current_time - 3600:
                 del games[game_id]
+                del online[game_id]
                 print(games)
                 print(f"Game {game_id} has been removed due to inactivity.")
         time.sleep(1800)
@@ -162,6 +171,74 @@ def clean_up_games():
 cleanup_thread = threading.Thread(target=clean_up_games)
 cleanup_thread.daemon = True  # Set as daemon so it exits when the main thread exits
 cleanup_thread.start()
+
+heartbeat_interval = 5  # seconds
+
+
+@socketio.on('heartbeat')
+def handle_heartbeat(data):
+    player_id = data.get('player_id')
+    game_id= data.get('game_id')
+    if game_id in online and player_id in online[game_id]:  # Check if player is still in the game
+        online[game_id][player_id] = time.time()
+
+from threading import Timer
+
+def check_inactive_players():
+    print(' Check for inactive players and handle game switch')
+    for game_id in online:
+        dlt=[]
+        for player_id in online[game_id]:
+            if time.time() - online[game_id][player_id] > heartbeat_interval * 2:
+                dlt.append(player_id)
+        for i in dlt:
+            online[game_id].pop(i)
+            print(i)
+        if len(online[game_id])>0:
+            while games[game_id].turn not in online[game_id]:
+                games[game_id].skip()
+
+                response = {
+                            'cards': games[game_id].players,
+                            'last': games[game_id].last[0],
+                            'turn': games[game_id].turn
+                        }   
+                socketio.emit('game_state_update', response)   
+                
+                
+    # Schedule the next check
+    t = Timer(heartbeat_interval, check_inactive_players)
+    t.daemon = True
+    t.start()
+
+check_inactive_players()  # Start the recurring check
+
+@socketio.on('player_left')
+def handle_player_left(data):
+    game_id = data.get('game_id')
+    player_id = data.get('player_id')  
+
+    # Check if the game and player exist
+    if game_id in games and player_id in games[game_id].players:
+        # Mark the player as left or disconnected (you can implement this state)
+        games[game_id].players[player_id]['status'] = 'left'
+        print(f"Player {player_id} has left the game.")
+
+        # Check if there are any active players left in the game, if not end the game.
+        active_players = [player for player in games[game_id].players if player['status'] != 'left']
+        if len(active_players) <= 1:
+            # Broadcast gameover message to all remaining players (if any)
+            socketio.emit('gameover', {'winner': 'No winner'})
+            # Remove the finished game
+            del games[game_id]
+        else:
+            # Continue the game with the next active player's turn
+            games[game_id].skip()
+            response = {
+                'turn': games[game_id].turn
+            }
+            socketio.emit('game_state_update', response) 
+
 
 if __name__ == '__main__':
     app.run(debug=True)
