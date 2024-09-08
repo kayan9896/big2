@@ -164,7 +164,7 @@ def handle_disconnect():
             game_id, player_id = assigned[user_id]
             print(f"Player {player_id} from game {game_id} disconnected.")
             # Mark the player as disconnected
-            games[game_id].quit.add(player_id)  # Optionally remove their cards
+            games[game_id].quit.add(player_id) 
             del assigned[user_id]
 
             # Skip the player's turn and proceed with the next available player

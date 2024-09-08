@@ -20,7 +20,6 @@
     useEffect(() => {
       // Establish WebSocket connection only after receiving game data
       if (gameData && gameData.user_id) {
-        console.log('ccc')
         const newSocket = io(link, {
           query: { user_id: gameData.user_id }
         });
@@ -225,7 +224,7 @@
     return (
       <div className="App">
         { !gameData ? (
-        <div className="center-all"> {/* Center both buttons and messages */} 
+        <div className="center-all">  
           {gameState === 'notStarted' ? (
             <button onClick={startGame}>Start Game</button>
           ) : (

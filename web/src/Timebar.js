@@ -11,9 +11,9 @@ function Timebar({skip}) {
           console.log(timeLeft)
           return prevTime - 1;
         } else {
-            if (skip&&timeLeft===0) skip()
-          clearInterval(timer); // Stop the timer when timeLeft reaches 0
-          return 0; // Return 0 to prevent negative time
+            if (skip) skip()
+            clearInterval(timer); // Stop the timer when timeLeft reaches 0
+            return 15; 
         }
       });
     }, 1000);
