@@ -5,7 +5,7 @@
   import io from 'socket.io-client';
   
   function App() {
-    const link1='https://studious-fiesta-qg6rjrrwp4rhxq4p-5000.app.github.dev/'
+    const link1='https://redesigned-winner-94wvrvvp55xhxr47-5000.app.github.dev/'
     const link='https://big2.onrender.com/'
    
     const [ gameState, setGameState ] = useState('notStarted'); // 'notStarted', 'waiting', 'inProgress'
@@ -18,27 +18,31 @@
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
 
     useEffect(() => {
-      // Connect to the WebSocket server
-      const socket = io(link);
-    
-      // Listen for the 'gameover' event
-      socket.on('gameover', (data) => {
-        setGameState('gameOver'); 
-        if (data) {
-          setWinner(data.winner)
-        }
-      });
-      socket.on('game_state_update', (data) => {
-        // Update your React state with the received data 
-        console.log('ud')
-        setTurn(data.turn);
-        setLast(data.last);
-        setHandcards(data.cards); // Set the whole handcards instead of filtering them
-      });
-    
-      return () => socket.disconnect(); 
-    }, []);
-
+      // Establish WebSocket connection only after receiving game data
+      if (gameData && gameData.user_id) {
+        console.log('ccc')
+        const newSocket = io(link, {
+          query: { user_id: gameData.user_id }
+        });
+  
+        // Listen for game updates
+        newSocket.on('gameover', (data) => {
+          setGameState('gameOver'); 
+          if (data) {
+            setWinner(data.winner);
+          }
+        });
+  
+        newSocket.on('game_state_update', (data) => {
+          setTurn(data.turn);
+          setLast(data.last);
+          setHandcards(data.cards); 
+        });
+  
+        // Clean up connection on component unmount
+        return () => newSocket.disconnect();
+      }
+    }, [gameData]);
     
     useEffect(() => {
       if (gameData) {

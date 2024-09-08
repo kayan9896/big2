@@ -7,6 +7,7 @@ class Poker:
         self.turn = 0
         self.last = None
         self.last_active=None
+        self.quit= set()
 
     def distribute(self):
         cards = [(i, j) for i in range(3, 16) for j in range(1, 5)]
@@ -21,7 +22,9 @@ class Poker:
         self.last_active=time.time()
 
     def skip(self):
+        if len(self.quit)==4: return
         self.turn = (self.turn + 1) % 4
+        while self.turn in self.quit: self.skip()
 
     def play(self, player, c):
         cards=[self.players[player][i] for i in c]
@@ -34,7 +37,7 @@ class Poker:
             if i not in c: tmp.append(self.players[player][i])
         self.players[player]=tmp
         self.last = (cards,player)
-        self.turn = (self.turn + 1) % 4
+        self.skip()
         self.last_active=time.time()
 
 

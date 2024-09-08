@@ -31,7 +31,7 @@ def match():
 @app.route('/start', methods=['GET'])
 def start_game():
     # Add the player to the waitlist
-    user_id = uuid.uuid4()
+    user_id = str(uuid.uuid4())
     waitlist.append(user_id)
     t=5
     while t>0:
@@ -43,6 +43,7 @@ def start_game():
         if user_id in assigned:
             # Return the game details to the players
             response = {
+                'user_id':user_id,
                 'game_id': assigned[user_id][0],
                 'player_id': assigned[user_id][1],
                 'turn': games[assigned[user_id][0]].turn,
@@ -143,6 +144,38 @@ def update():
         return jsonify(response), 200
     except ValueError as e:
         return jsonify({'message': str(e)}), 400
+
+
+connected_clients = {}
+
+@socketio.on('connect')
+def handle_connect():
+    user_id = request.args.get('user_id')
+    connected_clients[request.sid] = user_id
+    print(f"User {user_id} connected with session {request.sid}")
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    user_id = connected_clients.pop(request.sid, None)
+    if user_id:
+        print(f"User {user_id} disconnected.")
+        # Check if the user is part of any game
+        if user_id in assigned:
+            game_id, player_id = assigned[user_id]
+            print(f"Player {player_id} from game {game_id} disconnected.")
+            # Mark the player as disconnected
+            games[game_id].quit.add(player_id)  # Optionally remove their cards
+            del assigned[user_id]
+
+            # Skip the player's turn and proceed with the next available player
+            if games[game_id].turn==player_id: games[game_id].skip()
+            response = {
+                'cards': games[game_id].players,
+                'last': games[game_id].last[0] if games[game_id].last else None,
+                'turn': games[game_id].turn
+            }
+            socketio.emit('game_state_update', response)
+            
 
 import threading
 
