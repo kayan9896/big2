@@ -1,12 +1,12 @@
 
-  import React, { useState, useEffect } from 'react';
+  import React, { useState, useEffect, useCallback } from 'react';
   import './App.css'; // Assuming a CSS file for styling
   import Timebar from './Timebar';
   import io from 'socket.io-client';
   
   function App() {
-    const link1='https://redesigned-winner-94wvrvvp55xhxr47-5000.app.github.dev/'
-    const link='https://big2.onrender.com/'
+    const link1='https://glorious-goldfish-5p56j66wxgw2p7rw-5000.app.github.dev/'
+    const link=link1//'https://big2.onrender.com/'
    
     const [ gameState, setGameState ] = useState('notStarted'); // 'notStarted', 'waiting', 'inProgress'
     const [ gameData, setGameData ] = useState(null);
@@ -16,32 +16,46 @@
     const [valid,setValid]=useState(false)
     const [winner,setWinner]=useState(null)
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
+    const [timeLeft, setTimeLeft] = useState(15);
+    const [socket, setSocket] = useState(null);
+  const [turnStartTime, setTurnStartTime] = useState(null);
+  const [turnDuration, setTurnDuration] = useState(15);
 
-    useEffect(() => {
-      // Establish WebSocket connection only after receiving game data
-      if (gameData && gameData.user_id) {
-        const newSocket = io(link, {
-          query: { user_id: gameData.user_id }
-        });
-  
-        // Listen for game updates
-        newSocket.on('gameover', (data) => {
-          setGameState('gameOver'); 
-          if (data) {
-            setWinner(data.winner);
-          }
-        });
-  
-        newSocket.on('game_state_update', (data) => {
-          setTurn(data.turn);
-          setLast(data.last);
-          setHandcards(data.cards); 
-        });
-  
-        // Clean up connection on component unmount
-        return () => newSocket.disconnect();
-      }
-    }, [gameData]);
+  const updateTimeLeft = useCallback(() => {
+    if (turnStartTime) {
+      const elapsed = (Date.now() / 1000) - turnStartTime;
+      const timeLeft = Math.max(0, turnDuration - elapsed);
+      return timeLeft;
+    }
+    return turnDuration;
+  }, [turnStartTime, turnDuration]);
+
+  useEffect(() => {
+    if (gameData && gameData.user_id) {
+      const newSocket = io(link, {
+        query: { user_id: gameData.user_id }
+      });
+
+      newSocket.on('gameover', (data) => {
+        setGameState('gameOver');
+        if (data) {
+          setWinner(data.winner);
+        }
+      });
+
+      newSocket.on('game_state_update', (data) => {
+        setTurn(data.turn);
+        setLast(data.last);
+        setHandcards(data.cards);
+        setTurnStartTime(data.turnStartTime);
+        setTurnDuration(data.turnDuration);
+      });
+
+      setSocket(newSocket);
+
+      return () => newSocket.disconnect();
+    }
+  }, [gameData]);
     
     useEffect(() => {
       if (gameData) {
@@ -95,9 +109,12 @@
                          : playerIndex === (gameData.player_id + 2) % 4? 'rotate180': ''; 
                          
       return (
-        <div className={rotationClass} style={{width:'100%', height:'30%',alignContent:'center',display:'flex',flexDirection:'column'}}>
-          <p style={{textAlign:'center'}}>Player {playerIndex}</p>
-          {turn===playerIndex?<Timebar skip={turn===gameData.player_id?handlePass:null}/>:<p>{turn}</p>}
+        <div className={rotationClass} style={{width:'100%', height:'30%', alignContent:'center', display:'flex', flexDirection:'column'}}>
+        <p style={{textAlign:'center'}}>Player {playerIndex}</p>
+        {turn === playerIndex ? 
+          <Timebar updateTimeLeft={updateTimeLeft} /> : 
+          <p>{turn}</p>
+        }
         <div className={`card-area ${gameData.player_id === playerIndex ? 'player-area' : ''}`}>
           
           {handcards[playerIndex].map((card, i) => (

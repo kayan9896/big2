@@ -1,26 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
-import './App.css'; // Assuming a CSS file for styling
+import React, { useState, useEffect } from 'react';
+import './App.css';
 
-function Timebar({skip}) {
-  const [timeLeft, setTimeLeft] = useState(15); // Time limit in seconds
+function Timebar({ updateTimeLeft }) {
+  const [timeLeft, setTimeLeft] = useState(15);
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTimeLeft((prevTime) => {
-        if (prevTime > 0) {
-          console.log(timeLeft)
-          return prevTime - 1;
-        } else {
-            if (skip) skip()
-            clearInterval(timer); // Stop the timer when timeLeft reaches 0
-            return 15; 
-        }
-      });
-    }, 1000);
+      const newTimeLeft = updateTimeLeft();
+      setTimeLeft(newTimeLeft);
+    }, 100);  // Update every 100ms for smoother animation
 
     return () => clearInterval(timer);
-  }, [skip,timeLeft]);
-
+  }, [updateTimeLeft]);
 
   return (
     <div className="App">

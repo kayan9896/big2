@@ -8,6 +8,14 @@ class Poker:
         self.last = None
         self.last_active=None
         self.quit= set()
+        self.turn_start_time = None
+        self.turn_duration = 15  
+
+    def start_turn(self):
+        self.turn_start_time = time.time()
+
+    def is_turn_expired(self):
+        return time.time() - self.turn_start_time > self.turn_duration
 
     def distribute(self):
         cards = [(i, j) for i in range(3, 16) for j in range(1, 5)]
@@ -20,11 +28,13 @@ class Poker:
                 self.last=(None,player)
                 break
         self.last_active=time.time()
+        self.start_turn()
 
     def skip(self):
         if len(self.quit)==4: return
         self.turn = (self.turn + 1) % 4
         while self.turn in self.quit: self.skip()
+        self.start_turn()
 
     def play(self, player, c):
         cards=[self.players[player][i] for i in c]
@@ -39,6 +49,7 @@ class Poker:
         self.last = (cards,player)
         self.skip()
         self.last_active=time.time()
+        self.start_turn()
 
 
     def valid(self, player, c):
