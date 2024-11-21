@@ -20,7 +20,7 @@ assigned={}
 
 def match():
     while len(waitlist) >= 4:
-            game_id = len(games)
+            game_id = str(uuid.uuid4())
             game = Poker()
             game.distribute()
             games[game_id] = game
@@ -149,32 +149,30 @@ def handle_connect():
     connected_clients[request.sid] = user_id
     if user_id in assigned:
         game_id, _ = assigned[user_id]
-        socketio.server.enter_room(request.sid, game_id)
-        emit_game_state(game_id)  # Send initial game state upon connection
-    print(f"User {user_id} connected with session {request.sid}")
+        socketio.server.enter_room(request.sid, str(game_id))
+        print(f"User {user_id} joined room {game_id}")
+        emit_game_state(game_id)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     user_id = connected_clients.pop(request.sid, None)
-    if user_id:
-        print(f"User {user_id} disconnected.")
-        # Check if the user is part of any game
-        if user_id in assigned:
-            game_id, player_id = assigned[user_id]
-            print(f"Player {player_id} from game {game_id} disconnected.")
-            # Mark the player as disconnected
-            games[game_id].quit.add(player_id) 
-            del assigned[user_id]
+    if user_id and user_id in assigned:
+        game_id, player_id = assigned[user_id]
+        socketio.server.leave_room(request.sid, str(game_id))
+        print(f"User {user_id} left room {game_id}")
+        # Mark the player as disconnected
+        games[game_id].quit.add(player_id) 
+        del assigned[user_id]
 
-            # Skip the player's turn and proceed with the next available player
-            if games[game_id].turn==player_id: games[game_id].skip()
-            response = {
-                'cards': games[game_id].players,
-                'last': games[game_id].last[0] if games[game_id].last else None,
-                'turn': games[game_id].turn
-            }
-            socketio.emit('game_state_update', response)
-            
+        # Skip the player's turn and proceed with the next available player
+        if games[game_id].turn==player_id: games[game_id].skip()
+        response = {
+            'cards': games[game_id].players,
+            'last': games[game_id].last[0] if games[game_id].last else None,
+            'turn': games[game_id].turn
+        }
+        socketio.emit('game_state_update', response)
+        
 
 import threading
 
@@ -185,7 +183,8 @@ def emit_game_state(game_id):
         'last': game.last[0] if game.last else None,
         'turn': game.turn,
         'turnStartTime': game.turn_start_time,
-        'turnDuration': game.turn_duration
+        'turnDuration': game.turn_duration,
+        'room':game_id
     }
     socketio.emit('game_state_update', response, room=game_id)
 
@@ -210,11 +209,11 @@ def clean_up_games():
         print(current_time)
         for game_id, game in list(games.items()):
             print(current_time,game.last_active)
-            if game.last_active < current_time - 3600:
+            if game.last_active < current_time - 600:
                 del games[game_id]
                 print(games)
                 print(f"Game {game_id} has been removed due to inactivity.")
-        time.sleep(1800)
+        time.sleep(300)
 
 
 # Run the clean_up_games function every 30 minutes

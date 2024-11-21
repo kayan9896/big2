@@ -44,6 +44,10 @@
       });
 
       newSocket.on('game_state_update', (data) => {
+        if (data.room !== gameData.game_id) {
+            console.log(data.room,gameData.game,'Received message for different game, ignoring');
+            return;
+        }
         setTurn(data.turn);
         setLast(data.last);
         setHandcards(data.cards);
