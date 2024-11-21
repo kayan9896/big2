@@ -60,7 +60,10 @@
       return () => newSocket.disconnect();
     }
   }, [gameData]);
-    
+  
+    useEffect(()=>{
+      setSelectedCards([])
+    },[turn])
     useEffect(() => {
       if (gameData) {
         // If gameData is not null, update the gameState to 'inProgress'
@@ -145,6 +148,33 @@
         </div>
       );
     };
+    const handlePlay = async () => {
+      try {
+        const response = await fetch(link + '/play', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            'game_id': gameData.game_id,
+            'player_id': gameData.player_id,
+            'cards': selectedCards
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message);
+        }
+        
+        // Game state will be updated by the Socket.IO event listener
+      } catch (error) {
+        console.error('Play failed', error);
+      } finally {
+        setSelectedCards([]);
+      }
+    };
+    
     const handlePass = async () => {
       try {
         const response = await fetch(link + '/skip', {
@@ -157,64 +187,17 @@
             'player_id': gameData.player_id
           })
         });
-        setSelectedCards([])
-        console.log('pas')
-        if (response.ok) {
-          const data = await response.json();
-          setTurn(data.turn)
-        }
-      } catch (error) {
-        // Handle network error or other exceptions
-        console.error('Pass failed', error);
-      }
-    };
-    const handlePlay = async () => {
-      try {
-        const response = await fetch(link + '/play', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            'game_id': gameData.game_id,
-            'player_id': gameData.player_id,
-            'cards':selectedCards
-          })
-        });
-        setSelectedCards([])
-        if (response.ok) {
-          const data = await response.json();
-          setTurn(data.turn)
-          setLast(data.last)
-          setHandcards(data.cards)
-        }
-      } catch (error) {
-        // Handle network error or other exceptions
-        console.error('Play failed', error);
-      }
-    };
-    const handleUpdate = async () => {
-      try {
-        const response = await fetch(link + '/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            'game_id': gameData.game_id,
-            'player_id': gameData.player_id
-          })
-        });
         
-        if (response.ok) {
-          const data = await response.json();
-          setTurn(data.turn)
-          setLast(data.last)
-          setHandcards(data.cards)
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message);
         }
+        
+        // Game state will be updated by the Socket.IO event listener
       } catch (error) {
-        // Handle network error or other exceptions
-        console.error('Update failed', error);
+        console.error('Pass failed', error);
+      } finally {
+        setSelectedCards([]);
       }
     };
     const handleValid = async () => {

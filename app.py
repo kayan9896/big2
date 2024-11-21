@@ -56,50 +56,70 @@ def start_game():
 @app.route('/play', methods=['POST'])
 def play_card():
     data = request.get_json()
+    if not data:
+        return error_response('Invalid request data', 400)
+    
     game_id = data.get('game_id')
     player_id = data.get('player_id')
     cards = data.get('cards')
+    
+    if not all([game_id, player_id is not None, cards]):
+        return error_response('Missing required fields', 400)
+    
+    if game_id not in games:
+        return error_response('Game not found', 404)
+    
+    if player_id not in games[game_id].players:
+        return error_response('Player not found in this game', 404)
 
     if games[game_id].is_turn_expired():
         games[game_id].skip()
         emit_game_state(game_id)
-        return jsonify({'message': 'Turn time expired'}), 400
+        return error_response('Turn time expired', 400)
 
-    # Check if the game and player exist
-    if game_id not in games or player_id not in games[game_id].players:
-        return jsonify({'message': 'Invalid game or player'}), 400
-
-    # Call the play function and return the updated player's cards
     try:
         games[game_id].play(player_id, cards)
         
         for i in range(4):
-            if len(games[game_id].players[i]) ==0:
-                # Broadcast gameover message to all players in the game
-                socketio.emit('gameover',{'winner':i})  
-                  # Remove the finished game 
+            if len(games[game_id].players[i]) == 0:
+                socketio.emit('gameover', {'winner': i}, room=str(game_id))
+        
         emit_game_state(game_id)      
-        return jsonify(response), 200
+        return jsonify({'message': 'Play successful'}), 200
     except ValueError as e:
-        return jsonify({'message': str(e)}), 400
+        return error_response(str(e), 400)
+    except Exception as e:
+        app.logger.error(f'Unexpected error in play_card: {str(e)}')
+        return error_response('Internal server error', 500)
 
 @app.route('/skip', methods=['POST'])
 def skip_turn():
     data = request.get_json()
-    game_id = data.get('game_id')
-    player_id = data.get('player_id')
+    is_valid, error_msg = validate_request_data(data, ['game_id', 'player_id'])
+    if not is_valid:
+        return error_response(error_msg, 400)
+    
+    game_id = data['game_id']
+    player_id = data['player_id']
+    
+    if game_id not in games:
+        return error_response('Game not found', 404)
+    
+    if player_id not in games[game_id].players:
+        return error_response('Player not found in this game', 404)
 
-    if time.time() > games[game_id].turn_end_time:
+    current_time = time.time()
+    if current_time > games[game_id].turn_start_time + games[game_id].turn_duration:
         games[game_id].skip()
 
-    # Check if the game and player exist
-    if game_id not in games or player_id not in games[game_id].players:
-        return jsonify({'message': 'Invalid game or player'}), 400
-
-    # Call the skip function and return the updated turn
-    games[game_id].skip()
-    emit_game_state(game_id)
-    return jsonify(response), 200
+    try:
+        games[game_id].skip()
+        emit_game_state(game_id)
+        logger.info(f'Player {player_id} skipped turn in game {game_id}')
+        return jsonify({'message': 'Turn skipped'}), 200
+    except Exception as e:
+        logger.error(f'Error in skip_turn: {str(e)}')
+        return error_response('Internal server error', 500)
 
 @app.route('/valid', methods=['POST'])
 def check_validity():
