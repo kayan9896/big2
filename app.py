@@ -94,11 +94,7 @@ def play_card():
 
 @app.route('/skip', methods=['POST'])
 def skip_turn():
-    data = request.get_json()
-    is_valid, error_msg = validate_request_data(data, ['game_id', 'player_id'])
-    if not is_valid:
-        return error_response(error_msg, 400)
-    
+    data = request.get_json()    
     game_id = data['game_id']
     player_id = data['player_id']
     
@@ -115,10 +111,10 @@ def skip_turn():
     try:
         games[game_id].skip()
         emit_game_state(game_id)
-        logger.info(f'Player {player_id} skipped turn in game {game_id}')
+        app.logger.info(f'Player {player_id} skipped turn in game {game_id}')
         return jsonify({'message': 'Turn skipped'}), 200
     except Exception as e:
-        logger.error(f'Error in skip_turn: {str(e)}')
+        app.logger.error(f'Error in skip_turn: {str(e)}')
         return error_response('Internal server error', 500)
 
 @app.route('/valid', methods=['POST'])
@@ -206,6 +202,7 @@ def emit_game_state(game_id):
         'turnDuration': game.turn_duration,
         'room':game_id
     }
+    print(game.turn_start_time)
     socketio.emit('game_state_update', response, room=game_id)
 
 def manage_game_turns():

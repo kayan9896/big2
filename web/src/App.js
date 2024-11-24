@@ -16,19 +16,23 @@
     const [valid,setValid]=useState(false)
     const [winner,setWinner]=useState(null)
     const suit={1:'spades',2:'hearts',3:'clubs',4:'diamonds'}
-    const [timeLeft, setTimeLeft] = useState(15);
-    const [socket, setSocket] = useState(null);
   const [turnStartTime, setTurnStartTime] = useState(null);
   const [turnDuration, setTurnDuration] = useState(15);
+  const [timeOffset, setTimeOffset] = useState(0);
+
 
   const updateTimeLeft = useCallback(() => {
     if (turnStartTime) {
-      const elapsed = (Date.now() / 1000) - turnStartTime;
+      const currentTime = Date.now() / 1000;
+      const adjustedCurrentTime = currentTime - timeOffset;
+      const elapsed = Math.max(0, adjustedCurrentTime - (turnStartTime - timeOffset));
       const timeLeft = Math.max(0, turnDuration - elapsed);
+      
       return timeLeft;
     }
     return turnDuration;
-  }, [turnStartTime, turnDuration]);
+  }, [turnStartTime, turnDuration, timeOffset]);
+  
 
   useEffect(() => {
     if (gameData && gameData.user_id) {
@@ -43,19 +47,24 @@
         }
       });
 
+      
       newSocket.on('game_state_update', (data) => {
-        if (data.room !== gameData.game_id) {
-            console.log(data.room,gameData.game,'Received message for different game, ignoring');
-            return;
-        }
+        if (data.room !== gameData.game_id) return;
+        
+        const clientTime = Date.now() / 1000;
+        const serverTime = data.turnStartTime;
+        const newOffset = clientTime - serverTime;
+        setTimeOffset(newOffset);
+        
         setTurn(data.turn);
         setLast(data.last);
         setHandcards(data.cards);
-        setTurnStartTime(data.turnStartTime);
+        
+        const adjustedTurnStartTime = data.turnStartTime + newOffset;
+        setTurnStartTime(adjustedTurnStartTime);
         setTurnDuration(data.turnDuration);
       });
 
-      setSocket(newSocket);
 
       return () => newSocket.disconnect();
     }
